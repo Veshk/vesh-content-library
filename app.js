@@ -10,6 +10,9 @@ const words=n=>`${n} ${plural(n)}`;
 const sorted=a=>[...new Set(a)].sort((a,b)=>a.localeCompare(b,'ru'));
 const topicNames=sorted(data.flatMap(x=>x.topics));
 const teacherNames=sorted(data.flatMap(x=>x.teachers));
+const badgeClass={'Кейс':' case','Мастер-класс':' masterclass','Демо-курс':' demo'};
+$('library-count').textContent=data.length;
+$('library-updated').textContent='Версия базы от '+window.VESH_LIBRARY.updated.split('-').reverse().join('.');
 const state={type:'',topics:new Set(),teachers:new Set(),query:'',selected:new Set()};
 try {const stored=JSON.parse(localStorage.getItem('vesh-content-selection')||'[]');if(Array.isArray(stored))state.selected=new Set(stored.filter(id=>byId.has(id)));}catch{}
 let matched=data;
@@ -27,7 +30,7 @@ matched=data.filter(matches);
 $('result-count').textContent=words(matched.length);
 $('empty').hidden=!!matched.length;
 $('add-all').disabled=!matched.some(x=>!state.selected.has(x.id));
-$('materials').innerHTML=matched.map(x=>{const chosen=state.selected.has(x.id);return `<article class="material${chosen?' chosen':''}"><div><div class="material-labels"><span class="badge${x.type==='Кейс'?' case':''}">${esc(x.type)}</span></div><h3><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.title)} <span class="arrow" aria-hidden="true">↗</span></a></h3><p class="teacher-names${x.teachers.length?'':' missing'}">${esc(x.teachers.length?x.teachers.join(' · '):'Преподаватель не указан')}</p><div class="tags">${x.topics.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div></div><button class="add-button" data-id="${x.id}" aria-pressed="${chosen}" aria-label="${chosen?'Убрать из подборки':'Добавить в подборку'}: ${esc(x.title)}" title="${chosen?'Убрать из подборки':'Добавить в подборку'}">${chosen?'✓':'+'}</button></article>`;}).join('');
+$('materials').innerHTML=matched.map(x=>{const chosen=state.selected.has(x.id);return `<article class="material${chosen?' chosen':''}"><div><div class="material-labels"><span class="badge${badgeClass[x.type]||''}">${esc(x.type)}</span></div><h3><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.title)} <span class="arrow" aria-hidden="true">↗</span></a></h3><p class="teacher-names${x.teachers.length?'':' missing'}">${esc(x.teachers.length?x.teachers.join(' · '):'Преподаватель не указан')}</p><div class="tags">${x.topics.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div></div><button class="add-button" data-id="${x.id}" aria-pressed="${chosen}" aria-label="${chosen?'Убрать из подборки':'Добавить в подборку'}: ${esc(x.title)}" title="${chosen?'Убрать из подборки':'Добавить в подборку'}">${chosen?'✓':'+'}</button></article>`;}).join('');
 renderChips();renderSelection();
 }
 function renderChips(){const chips=[];if(state.type)chips.push({kind:'type',value:state.type});for(const value of state.topics)chips.push({kind:'topic',value});for(const value of state.teachers)chips.push({kind:'teacher',value});$('active-filters').innerHTML=chips.map(c=>`<button class="filter-chip" data-kind="${c.kind}" data-value="${esc(c.value)}" aria-label="Убрать фильтр ${esc(c.value)}">${esc(c.value)}<span aria-hidden="true">×</span></button>`).join('');$('teacher-label').textContent=state.teachers.size?`Выбрано: ${state.teachers.size}`:'Все преподаватели';}

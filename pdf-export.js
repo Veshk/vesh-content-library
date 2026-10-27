@@ -34,7 +34,7 @@ window.createVeshPDF = ({title,note,items}) => {
       doc.text(line,x,y);y+=leading;
     }
   }
-  doc.setProperties({title:clean(title),subject:'Подборка статей и кейсов Высшей экономической школы',author:'Высшая экономическая школа',creator:'Библиотека экспертизы ВЭШ'});
+  doc.setProperties({title:clean(title),subject:'Подборка материалов Высшей экономической школы',author:'Высшая экономическая школа',creator:'Библиотека экспертизы ВЭШ'});
   doc.addImage(assets.logo,'PNG',left,12,48,48*456/1090);
   font('Lato',10,'normal',muted);doc.text('Библиотека экспертизы',right,24,{align:'right'});
   rule(39);
@@ -61,7 +61,7 @@ window.createVeshPDF = ({title,note,items}) => {
     y+=1;
     if(teachers.length){font('Lato',10.5,'normal',muted);lines(teachers,x,4.8);y+=2;}
     font('Lato',9.5,'normal',muted);lines(topics,x,4.5);y+=3;
-    font('Lato',10,'bold',blue);doc.textWithLink('Читать на veshk.ru',x,y,{url:item.url});y+=11;
+    font('Lato',10,'bold',blue);const linkLabel=item.type==='Мастер-класс'?(item.url.startsWith('https://rutube.ru/')?'Смотреть запись на Rutube':'Смотреть запись мастер-класса'):item.type==='Демо-курс'?'Открыть демо-курс':'Читать на veshk.ru';doc.textWithLink(linkLabel,x,y,{url:item.url});y+=11;
   });
   const total=doc.getNumberOfPages();
   for(let page=1;page<=total;page++){
