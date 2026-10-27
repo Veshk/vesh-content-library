@@ -47,7 +47,7 @@ window.createVeshPDF = ({title,note,items}) => {
   items.forEach((item,index)=>{
     const x=30,w=162;
     font('Qanelas',17,'bold',navy);const titleLines=wrap(item.title,w);
-    font('Lato',10.5,'normal',muted);const teachers=item.teachers.length?wrap(item.teachers.join(' · '),w):[];
+    font('Lato',10.5,'normal',muted);const teachers=item.teachers.length?wrap(item.teachers.join(', '),w):[];
     font('Lato',9.5,'normal',muted);const topics=wrap(item.topics.join(' / '),w);
     const height=10+titleLines.length*6.7+(teachers.length?teachers.length*4.8+2:0)+topics.length*4.5+15;
     if(y+height>bottom)nextPage();

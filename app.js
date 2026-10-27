@@ -13,7 +13,7 @@ const teacherNames=sorted(data.flatMap(x=>x.teachers));
 const badgeClass={'Кейс':' case','Мастер-класс':' masterclass','Демо-курс':' demo'};
 $('library-count').textContent=data.length;
 $('library-updated').textContent='Версия базы от '+window.VESH_LIBRARY.updated.split('-').reverse().join('.');
-const state={type:'',topics:new Set(),teachers:new Set(),query:'',selected:new Set()};
+const state={types:new Set(),topics:new Set(),teachers:new Set(),query:'',selected:new Set()};
 try {const stored=JSON.parse(localStorage.getItem('vesh-content-selection')||'[]');if(Array.isArray(stored))state.selected=new Set(stored.filter(id=>byId.has(id)));}catch{}
 let matched=data;
 let toastTimer;
@@ -24,27 +24,27 @@ for(const name of topicNames)$('topics').append(makeOption(name,data.filter(x=>x
 for(const name of teacherNames)$('teachers').append(makeOption(name,null,'teacher'));
 $('teachers').append(makeOption('Без указанного преподавателя',null,'teacher'));
 const searchable=new Map(data.map(x=>[x.id,norm([x.title,...x.teachers,...x.topics].join(' '))]));
-function matches(x){return(!state.type||x.type===state.type)&&(!state.topics.size||x.topics.some(t=>state.topics.has(t)))&&(!state.teachers.size||x.teachers.some(t=>state.teachers.has(t))||(!x.teachers.length&&state.teachers.has('Без указанного преподавателя')))&&norm(state.query).trim().split(/\s+/).filter(Boolean).every(t=>searchable.get(x.id).includes(t));}
+function matches(x){return(!state.types.size||state.types.has(x.type))&&(!state.topics.size||x.topics.some(t=>state.topics.has(t)))&&(!state.teachers.size||x.teachers.some(t=>state.teachers.has(t))||(!x.teachers.length&&state.teachers.has('Без указанного преподавателя')))&&norm(state.query).trim().split(/\s+/).filter(Boolean).every(t=>searchable.get(x.id).includes(t));}
 function render(){
 matched=data.filter(matches);
 $('result-count').textContent=words(matched.length);
 $('empty').hidden=!!matched.length;
 $('add-all').disabled=!matched.some(x=>!state.selected.has(x.id));
-$('materials').innerHTML=matched.map(x=>{const chosen=state.selected.has(x.id);return `<article class="material${chosen?' chosen':''}"><div><div class="material-labels"><span class="badge${badgeClass[x.type]||''}">${esc(x.type)}</span></div><h3><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.title)} <span class="arrow" aria-hidden="true">↗</span></a></h3><p class="teacher-names${x.teachers.length?'':' missing'}">${esc(x.teachers.length?x.teachers.join(' · '):'Преподаватель не указан')}</p><div class="tags">${x.topics.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div></div><button class="add-button" data-id="${x.id}" aria-pressed="${chosen}" aria-label="${chosen?'Убрать из подборки':'Добавить в подборку'}: ${esc(x.title)}" title="${chosen?'Убрать из подборки':'Добавить в подборку'}">${chosen?'✓':'+'}</button></article>`;}).join('');
+$('materials').innerHTML=matched.map(x=>{const chosen=state.selected.has(x.id);return `<article class="material${chosen?' chosen':''}"><div><div class="material-labels"><span class="badge${badgeClass[x.type]||''}">${esc(x.type)}</span></div><h3><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.title)} <span class="arrow" aria-hidden="true">↗</span></a></h3><p class="teacher-names${x.teachers.length?'':' missing'}">${esc(x.teachers.length?x.teachers.join(', '):'Преподаватель не указан')}</p><div class="tags">${x.topics.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div></div><button class="add-button" data-id="${x.id}" aria-pressed="${chosen}" aria-label="${chosen?'Убрать из подборки':'Добавить в подборку'}: ${esc(x.title)}" title="${chosen?'Убрать из подборки':'Добавить в подборку'}">${chosen?'✓':'+'}</button></article>`;}).join('');
 renderChips();renderSelection();
 }
-function renderChips(){const chips=[];if(state.type)chips.push({kind:'type',value:state.type});for(const value of state.topics)chips.push({kind:'topic',value});for(const value of state.teachers)chips.push({kind:'teacher',value});$('active-filters').innerHTML=chips.map(c=>`<button class="filter-chip" data-kind="${c.kind}" data-value="${esc(c.value)}" aria-label="Убрать фильтр ${esc(c.value)}">${esc(c.value)}<span aria-hidden="true">×</span></button>`).join('');$('teacher-label').textContent=state.teachers.size?`Выбрано: ${state.teachers.size}`:'Все преподаватели';}
-function syncControls(){document.querySelectorAll('[data-type]').forEach(b=>{const active=b.dataset.type===state.type;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));});document.querySelectorAll('input[data-kind]').forEach(input=>{input.checked=(input.dataset.kind==='topic'?state.topics:state.teachers).has(input.value);});$('search').value=state.query;}
-function reset(){state.query='';state.type='';state.topics.clear();state.teachers.clear();$('teacher-search').value='';$('teachers').querySelectorAll('label').forEach(x=>x.hidden=false);syncControls();render();}
+function renderChips(){const chips=[];for(const value of state.types)chips.push({kind:'type',value});for(const value of state.topics)chips.push({kind:'topic',value});for(const value of state.teachers)chips.push({kind:'teacher',value});$('active-filters').innerHTML=chips.map(c=>`<button class="filter-chip" data-kind="${c.kind}" data-value="${esc(c.value)}" aria-label="Убрать фильтр ${esc(c.value)}">${esc(c.value)}<span aria-hidden="true">×</span></button>`).join('');$('teacher-label').textContent=state.teachers.size?`Выбрано: ${state.teachers.size}`:'Все преподаватели';}
+function syncControls(){document.querySelectorAll('[data-type]').forEach(b=>{const active=b.dataset.type?state.types.has(b.dataset.type):!state.types.size;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));});document.querySelectorAll('input[data-kind]').forEach(input=>{input.checked=(input.dataset.kind==='topic'?state.topics:state.teachers).has(input.value);});$('search').value=state.query;}
+function reset(){state.query='';state.types.clear();state.topics.clear();state.teachers.clear();$('teacher-search').value='';$('teachers').querySelectorAll('label').forEach(x=>x.hidden=false);syncControls();render();}
 function renderSelection(){const n=state.selected.size;$('selected-count').textContent=n;$('selected-label').textContent=`${plural(n)} в подборке`;$('open-collection').disabled=!n;$('clear-selection').disabled=!n;}
 function selectedItems(){return [...state.selected].map(id=>byId.get(id)).filter(Boolean);}
-function renderCollection(){const items=selectedItems();$('collection-meta').textContent=words(items.length);$('collection-list').innerHTML=items.map(x=>`<li><div class="collection-row"><div><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.title)} ↗</a><p>${esc([x.type,...x.teachers].join(' · '))}</p></div><button class="remove-button" data-remove="${x.id}" aria-label="Убрать ${esc(x.title)}">×</button></div></li>`).join('');$('collection-empty').hidden=!!items.length;$('copy-collection').disabled=!items.length;$('download-collection').disabled=!items.length;}
+function renderCollection(){const items=selectedItems();$('collection-meta').textContent=words(items.length);$('collection-list').innerHTML=items.map(x=>`<li><div class="collection-row"><div><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.title)} ↗</a><p>${esc(materialMeta(x))}</p></div><button class="remove-button" data-remove="${x.id}" aria-label="Убрать ${esc(x.title)}">×</button></div></li>`).join('');$('collection-empty').hidden=!!items.length;$('copy-collection').disabled=!items.length;$('download-collection').disabled=!items.length;renderEmailPreview();}
 $('topics').addEventListener('change',e=>{const x=e.target;if(x.type!=='checkbox')return;x.checked?state.topics.add(x.value):state.topics.delete(x.value);render();});
 $('teachers').addEventListener('change',e=>{const x=e.target;if(x.type!=='checkbox')return;x.checked?state.teachers.add(x.value):state.teachers.delete(x.value);render();});
 $('teacher-search').addEventListener('input',e=>{for(const label of $('teachers').querySelectorAll('label'))label.hidden=!norm(label.textContent).includes(norm(e.target.value));});
-document.querySelectorAll('[data-type]').forEach(b=>b.addEventListener('click',()=>{state.type=b.dataset.type;syncControls();render();}));
+document.querySelectorAll('[data-type]').forEach(b=>b.addEventListener('click',()=>{const type=b.dataset.type;if(!type)state.types.clear();else if(state.types.has(type))state.types.delete(type);else state.types.add(type);syncControls();render();}));
 $('search').addEventListener('input',e=>{state.query=e.target.value;render();});
-$('active-filters').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.kind==='type')state.type='';else(state[b.dataset.kind==='topic'?'topics':'teachers']).delete(b.dataset.value);syncControls();render();});
+$('active-filters').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;state[{type:'types',topic:'topics',teacher:'teachers'}[b.dataset.kind]].delete(b.dataset.value);syncControls();render();});
 $('reset').addEventListener('click',reset);$('empty-reset').addEventListener('click',reset);
 $('materials').addEventListener('click',e=>{const b=e.target.closest('[data-id]');if(!b)return;state.selected.has(b.dataset.id)?state.selected.delete(b.dataset.id):state.selected.add(b.dataset.id);save();render();});
 $('add-all').addEventListener('click',()=>{const before=state.selected.size;matched.forEach(x=>state.selected.add(x.id));save();render();toast(`Добавлено: ${words(state.selected.size-before)}`);});
@@ -53,8 +53,53 @@ $('open-collection').addEventListener('click',()=>{renderCollection();$('collect
 $('close-collection').addEventListener('click',()=>$('collection').close());
 $('collection').addEventListener('close',()=>document.body.append($('toast')));
 $('collection-list').addEventListener('click',e=>{const b=e.target.closest('[data-remove]');if(!b)return;state.selected.delete(b.dataset.remove);save();render();renderCollection();});
-function collectionText(){return [($('collection-title').value.trim()||'Подборка материалов ВЭШ'),$('collection-note').value.trim(),...selectedItems().map((x,i)=>`${i+1}. ${x.title}\n${[x.type,...x.teachers].join(' · ')}\n${x.url}`)].filter(Boolean).join('\n\n');}
-$('copy-collection').addEventListener('click',async()=>{const text=collectionText();try{await navigator.clipboard.writeText(text);toast('Подборка скопирована');}catch{const area=document.createElement('textarea');area.value=text;area.style.cssText='position:fixed;left:0;top:0;opacity:.01';$('collection').append(area);area.focus();area.select();let ok=false;try{ok=document.execCommand('copy');}catch{}area.remove();toast(ok?'Подборка скопирована':'Не удалось скопировать. Сохраните подборку в PDF.');}});
+function materialMeta(item){return [item.type,item.teachers.join(', ')].filter(Boolean).join(' — ');}
+function collectionText(){return [($('collection-title').value.trim()||'Подборка материалов ВЭШ'),$('collection-note').value.trim(),...selectedItems().map((x,i)=>`${i+1}. ${x.title}\n${materialMeta(x)}\n${x.url}`)].filter(Boolean).join('\n\n');}
+function collectionHtml(){
+  const title=$('collection-title').value.trim()||'Подборка материалов ВЭШ';
+  const note=$('collection-note').value.trim();
+  // Email clients do not load this site's styles or fonts. Keep formatting inline.
+  const intro=note?`<p style="margin:0 0 18px;font:14px/1.6 Arial,Helvetica,sans-serif;color:#18252a;">${esc(note).replace(/\r?\n/g,'<br>')}</p>`:'';
+  const items=selectedItems().map(x=>`<li style="margin:0 0 16px;padding:0 0 0 4px;border:0;font:14px/1.6 Arial,Helvetica,sans-serif;color:#18252a;"><a href="${esc(x.url)}" target="_blank" rel="noopener" style="color:#226d8d;text-decoration:underline;font-weight:bold;">${esc(x.title)}</a><br><span style="color:#5f7286;font:13px/1.6 Arial,Helvetica,sans-serif;">${esc(materialMeta(x))}</span></li>`).join('');
+  return `<div lang="ru" style="font:14px/1.6 Arial,Helvetica,sans-serif;color:#18252a;text-align:left;"><p style="margin:0 0 16px;font:bold 22px/1.3 Arial,Helvetica,sans-serif;color:#0e394b;">${esc(title)}</p>${intro}<ol style="margin:0;padding:0 0 0 24px;">${items}</ol></div>`;
+}
+function renderEmailPreview(){
+  $('email-preview').innerHTML=collectionHtml();
+  $('email-details').hidden=!state.selected.size;
+  $('copy-status').hidden=true;
+}
+for(const id of ['collection-title','collection-note'])$(id).addEventListener('input',renderEmailPreview);
+function legacyCopy(html,text){
+  const area=document.createElement('div'),focused=document.activeElement;
+  area.contentEditable='true';area.innerHTML=html;
+  area.style.cssText='position:fixed;left:-9999px;top:0;';
+  $('collection').append(area);area.focus();
+  const selection=window.getSelection(),range=document.createRange();
+  range.selectNodeContents(area);selection.removeAllRanges();selection.addRange(range);
+  let copied=false;
+  const onCopy=e=>{if(!e.clipboardData)return;e.clipboardData.setData('text/html',html);e.clipboardData.setData('text/plain',text);e.preventDefault();copied=true;};
+  document.addEventListener('copy',onCopy);
+  try{return document.execCommand('copy')&&copied;}catch{return false;}
+  finally{document.removeEventListener('copy',onCopy);selection.removeAllRanges();area.remove();focused?.focus({preventScroll:true});}
+}
+$('copy-collection').addEventListener('click',async()=>{
+  if(!state.selected.size)return;
+  const html=collectionHtml(),text=collectionText();
+  let copied=false;
+  $('copy-status').hidden=true;
+  try{
+    if(navigator.clipboard?.write&&window.ClipboardItem){
+      await navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([html],{type:'text/html'}),'text/plain':new Blob([text],{type:'text/plain'})})]);
+      copied=true;
+    }
+  }catch{}
+  if(!copied)copied=legacyCopy(html,text);
+  if(copied){toast('Текст со ссылками скопирован. Вставьте его в письмо.');return;}
+  $('email-details').open=true;
+  $('copy-status').textContent='Браузер не разрешил копирование. Выделите текст в предпросмотре и скопируйте вручную.';
+  $('copy-status').hidden=false;
+  $('email-preview').focus();
+});
 $('download-collection').addEventListener('click',async()=>{
 const items=selectedItems();
 if(!items.length)return;
