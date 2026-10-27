@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Библиотека экспертизы ВЭШ: статьи, кейсы и подборки по темам и преподавателям.">
+<title>Библиотека экспертизы — ВЭШ</title>
+<link rel="stylesheet" href="styles.css">
+<script defer src="data.js"></script><script defer src="export-assets.js"></script><script defer src="assets/jspdf.umd.min.js"></script><script defer src="pdf-export.js"></script><script defer src="app.js"></script>
+</head>
+<body>
+<a class="skip" href="#catalog">Перейти к материалам</a>
+<header class="header"><div class="wrap header-inner"><a href="https://veshk.ru/" target="_blank" rel="noopener" class="brand"><img src="assets/logo.png" alt="Высшая экономическая школа" width="190" height="80"></a><div class="header-title">Библиотека экспертизы<span>Образовательные решения для бизнеса</span></div><a class="source-link" href="https://buildin.ai/veshk/78e96ab7-523c-4771-aa6e-987a4906622f" target="_blank" rel="noopener">Открыть базу в Buildin <span aria-hidden="true">↗</span></a></div></header>
+<section class="hero"><div class="wrap hero-inner"><div><p class="eyebrow">ЗНАНИЯ, КОТОРЫЕ РАБОТАЮТ</p><h1>Экспертиза ВЭШ<br>под вашу задачу</h1><p class="intro">Найдите статьи и кейсы по нужной теме.<br>Соберите из них подборку для клиента или команды.</p></div><div class="hero-aside"><img src="assets/motif.svg" alt="" class="motif"><div class="hero-count"><b>100</b><span>материалов<br>в одной библиотеке</span></div></div></div></section>
+<main class="wrap workspace" id="catalog">
+<aside class="filters" aria-label="Фильтры материалов"><div class="filter-heading"><h2>Что ищем?</h2><button id="reset" class="text-button">Сбросить</button></div>
+<fieldset><legend>Тип материала</legend><div class="types"><button data-type="" class="type active" aria-pressed="true">Все</button><button data-type="Статья" class="type" aria-pressed="false">Статьи</button><button data-type="Кейс" class="type" aria-pressed="false">Кейсы</button></div></fieldset>
+<fieldset><legend>Темы</legend><p class="hint">Можно выбрать несколько</p><div id="topics" class="topic-options"></div></fieldset>
+<fieldset class="teacher-field"><legend>Преподаватели</legend><details id="teacher-details"><summary><span id="teacher-label">Все преподаватели</span><span aria-hidden="true">⌄</span></summary><div class="teacher-menu"><label class="sr-only" for="teacher-search">Найти преподавателя</label><input id="teacher-search" type="search" placeholder="Имя или фамилия" autocomplete="off"><div id="teachers" class="teacher-options"></div></div></details></fieldset>
+<div class="filter-note">Внутри каждой группы подходят любые выбранные значения. Темы и преподаватели учитываются вместе.</div>
+</aside>
+<section class="results" aria-label="Каталог материалов"><label class="sr-only" for="search">Поиск материалов</label><div class="search-box"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="m16 16 5 5"></path></svg><input id="search" type="search" placeholder="Тема, название или фамилия преподавателя" autocomplete="off"></div>
+<div id="active-filters" class="active-filters" aria-label="Выбранные фильтры"></div>
+<div class="result-toolbar"><h2 id="result-count" aria-live="polite"></h2><button id="add-all" class="text-button">Добавить все найденные <span aria-hidden="true">+</span></button></div>
+<div id="materials"></div><div id="empty" class="empty" hidden><span class="empty-symbol" aria-hidden="true">⌕</span><h3>Пока ничего не нашлось</h3><p>Попробуйте другую формулировку или уберите часть фильтров.</p><button id="empty-reset" class="outline-button">Сбросить фильтры</button></div>
+</section>
+</main>
+<footer class="wrap footer"><span>Высшая экономическая школа · Знания для развития и жизни</span><span>Версия базы от 27.10.2026</span></footer>
+<div class="selection-bar"><div class="wrap selection-inner"><div><span class="selection-count" id="selected-count">0</span><span id="selected-label">материалов в подборке</span></div><div class="selection-actions"><button id="clear-selection" class="text-button" disabled>Очистить</button><button id="open-collection" class="primary-button" disabled>Собрать подборку <span aria-hidden="true">→</span></button></div></div></div>
+<dialog id="collection"><div class="dialog-top"><div><p class="eyebrow">ВАША ПОДБОРКА</p><h2>Всё нужное — вместе</h2></div><button id="close-collection" class="icon-button" aria-label="Закрыть подборку">×</button></div><div class="dialog-body"><label for="collection-title" class="field-label">Название подборки</label><input id="collection-title" maxlength="160" value="Подборка материалов ВЭШ"><label for="collection-note" class="field-label">Вступление <span class="hint">необязательно</span></label><textarea id="collection-note" maxlength="2000" rows="2" placeholder="Например: собрали материалы о развитии управленческой команды."></textarea><div class="collection-meta" id="collection-meta"></div><ol id="collection-list"></ol><div id="collection-empty" hidden><p>В подборке пока нет материалов. Вернитесь в каталог и добавьте нужные.</p></div></div><div class="dialog-bottom"><span>Ссылки ведут на исходные публикации ВЭШ</span><div><button id="copy-collection" class="outline-button">Скопировать ссылки</button><button id="download-collection" class="primary-button">Сохранить PDF <span aria-hidden="true">↓</span></button></div></div></dialog>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<noscript><p class="wrap">Для поиска и сбора подборок включите JavaScript. Материалы также доступны в <a href="https://veshk.ru/blog">блоге ВЭШ</a>.</p></noscript>
+</body></html>
