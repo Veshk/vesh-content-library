@@ -10,7 +10,7 @@ const words=n=>`${n} ${plural(n)}`;
 const sorted=a=>[...new Set(a)].sort((a,b)=>a.localeCompare(b,'ru'));
 const topicNames=sorted(data.flatMap(x=>x.topics));
 const teacherNames=sorted(data.flatMap(x=>x.teachers));
-const badgeClass={'Кейс':' case','Мастер-класс':' masterclass','Демо-курс':' demo'};
+const badgeClass={'Кейс':' case','Мастер-класс':' masterclass','Демо-курс':' demo','Гайд':' guide'};
 $('library-count').textContent=data.length;
 $('library-updated').textContent='Версия базы от '+window.VESH_LIBRARY.updated.split('-').reverse().join('.');
 const state={types:new Set(),topics:new Set(),teachers:new Set(),query:'',selected:new Set()};
@@ -54,14 +54,23 @@ $('close-collection').addEventListener('click',()=>$('collection').close());
 $('collection').addEventListener('close',()=>document.body.append($('toast')));
 $('collection-list').addEventListener('click',e=>{const b=e.target.closest('[data-remove]');if(!b)return;state.selected.delete(b.dataset.remove);save();render();renderCollection();});
 function materialMeta(item){return [item.type,item.teachers.join(', ')].filter(Boolean).join(' — ');}
-function collectionText(){return [($('collection-title').value.trim()||'Подборка материалов ВЭШ'),$('collection-note').value.trim(),...selectedItems().map((x,i)=>`${i+1}. ${x.title}\n${materialMeta(x)}\n${x.url}`)].filter(Boolean).join('\n\n');}
-function collectionHtml(){
+function collectionText(createdDate=window.VESH_LINKS.creationDate()){
+  const groups=window.VESH_COLLECTION.groups(selectedItems()).map(group=>[group.label,...group.items.map(x=>`${x.title}\n${window.VESH_COLLECTION.action(x.type)}: ${window.VESH_LINKS.track(x.url,'email',createdDate)}`)].join('\n\n'));
+  return [($('collection-title').value.trim()||'Подборка материалов ВЭШ'),$('collection-note').value.trim(),...groups].filter(Boolean).join('\n\n');
+}
+function collectionHtml(createdDate=window.VESH_LINKS.creationDate()){
   const title=$('collection-title').value.trim()||'Подборка материалов ВЭШ';
   const note=$('collection-note').value.trim();
   // Email clients do not load this site's styles or fonts. Keep formatting inline.
   const intro=note?`<p style="margin:0 0 18px;font:14px/1.6 Arial,Helvetica,sans-serif;color:#18252a;">${esc(note).replace(/\r?\n/g,'<br>')}</p>`:'';
-  const items=selectedItems().map(x=>`<li style="margin:0 0 16px;padding:0 0 0 4px;border:0;font:14px/1.6 Arial,Helvetica,sans-serif;color:#18252a;"><a href="${esc(x.url)}" target="_blank" rel="noopener" style="color:#226d8d;text-decoration:underline;font-weight:bold;">${esc(x.title)}</a><br><span style="color:#5f7286;font:13px/1.6 Arial,Helvetica,sans-serif;">${esc(materialMeta(x))}</span></li>`).join('');
-  return `<div lang="ru" style="font:14px/1.6 Arial,Helvetica,sans-serif;color:#18252a;text-align:left;"><p style="margin:0 0 16px;font:bold 22px/1.3 Arial,Helvetica,sans-serif;color:#0e394b;">${esc(title)}</p>${intro}<ol style="margin:0;padding:0 0 0 24px;">${items}</ol></div>`;
+  const groups=window.VESH_COLLECTION.groups(selectedItems()).map(group=>{
+    const rows=group.items.map(x=>{
+      const url=esc(window.VESH_LINKS.track(x.url,'email',createdDate));
+      return `<tr><td style="padding:12px 0 14px;border-top:1px solid #dce4e8;text-align:left;"><p style="margin:0 0 5px;font:bold 16px/1.4 Arial,Helvetica,sans-serif;"><a href="${url}" target="_blank" rel="noopener" style="color:#0e394b;text-decoration:none;font:bold 16px/1.4 Arial,Helvetica,sans-serif;">${esc(x.title)}</a></p><a href="${url}" target="_blank" rel="noopener" style="color:#226d8d;text-decoration:underline;font:bold 13px/1.5 Arial,Helvetica,sans-serif;">${esc(window.VESH_COLLECTION.action(x.type))}</a></td></tr>`;
+    }).join('');
+    return `<h3 style="margin:22px 0 8px;font:bold 14px/1.4 Arial,Helvetica,sans-serif;color:#8d1638;">${esc(group.label)}</h3><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;">${rows}</table>`;
+  }).join('');
+  return `<div lang="ru" style="max-width:640px;font:14px/1.6 Arial,Helvetica,sans-serif;color:#18252a;text-align:left;"><h2 style="margin:0 0 16px;font:bold 22px/1.3 Arial,Helvetica,sans-serif;color:#0e394b;">${esc(title)}</h2>${intro}${groups}</div>`;
 }
 function renderEmailPreview(){
   $('email-preview').innerHTML=collectionHtml();
@@ -84,7 +93,8 @@ function legacyCopy(html,text){
 }
 $('copy-collection').addEventListener('click',async()=>{
   if(!state.selected.size)return;
-  const html=collectionHtml(),text=collectionText();
+  const createdDate=window.VESH_LINKS.creationDate();
+  const html=collectionHtml(createdDate),text=collectionText(createdDate);
   let copied=false;
   $('copy-status').hidden=true;
   try{

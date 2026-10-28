@@ -1,7 +1,7 @@
 (() => {
 'use strict';
 // Text remains selectable; embedded brand fonts preserve Cyrillic offline.
-window.createVeshPDF = ({title,note,items}) => {
+window.createVeshPDF = ({title,note,items,createdDate=window.VESH_LINKS.creationDate()}) => {
   const {jsPDF}=window.jspdf, assets=window.VESH_EXPORT_ASSETS;
   const doc=new jsPDF({unit:'mm',format:'a4',compress:true,putOnlyUsedFonts:true});
   for(const [file,family,style,key] of [
@@ -35,12 +35,10 @@ window.createVeshPDF = ({title,note,items}) => {
   y+=3;
   if(note){paragraph(note,{size:10.5,color:muted,leading:4.8});y+=4;}
   y+=6;
-  const typeLabels={'Статья':'Статьи','Кейс':'Кейсы','Мастер-класс':'Мастер-классы','Демо-курс':'Демо-курсы'};
-  const types=[...new Set([...Object.keys(typeLabels),...items.map(item=>item.type)])];
-  for(const type of types){
-    const group=items.filter(item=>item.type===type);
+  for(const group of window.VESH_COLLECTION.groups(items)){
     let needsHeading=true;
-    for(const item of group){
+    for(const item of group.items){
+      const url=window.VESH_LINKS.track(item.url,'pdf',createdDate);
       const leading=5.2;
       font('Qanelas',13.5,'bold',navy);const titleLines=wrap(item.title);
       const height=Math.max(18,titleLines.length*leading+10);
@@ -49,17 +47,17 @@ window.createVeshPDF = ({title,note,items}) => {
       if(pageItems===perPage||y+headingSpace+height>bottom){nextPage();needsHeading=true;}
       if(needsHeading){
         if(pageItems)y+=2;
-        font('Lato',11,'bold',wine);doc.text(clean(typeLabels[type]||type),left,y+4);
+        font('Lato',11,'bold',wine);doc.text(clean(group.label),left,y+4);
         y+=8;needsHeading=false;
       }
       rule(y);
       const baseline=y+6;
       font('Qanelas',13.5,'bold',navy);
-      titleLines.forEach((line,index)=>doc.textWithLink(line,left,baseline+index*leading,{url:item.url}));
-      const action=type==='Мастер-класс'?'Смотреть запись':type==='Демо-курс'?'Открыть демо-курс':'Читать';
+      titleLines.forEach((line,index)=>doc.textWithLink(line,left,baseline+index*leading,{url}));
+      const action=window.VESH_COLLECTION.action(group.type);
       const actionY=baseline+(titleLines.length-1)*leading+5;
       font('Lato',9.5,'bold',blue);
-      const actionWidth=doc.textWithLink(action,left,actionY,{url:item.url});
+      const actionWidth=doc.textWithLink(action,left,actionY,{url});
       doc.setDrawColor(blue);doc.setLineWidth(.15);doc.line(left,actionY+.8,left+actionWidth,actionY+.8);
       y+=height;pageItems++;
     }
@@ -67,7 +65,7 @@ window.createVeshPDF = ({title,note,items}) => {
   const total=doc.getNumberOfPages();
   for(let page=1;page<=total;page++){
     doc.setPage(page);
-    font('Lato',8.5,'normal',muted);doc.textWithLink('veshk.ru',left,288,{url:'https://veshk.ru/'});
+    font('Lato',8.5,'normal',muted);doc.textWithLink('veshk.ru',left,288,{url:window.VESH_LINKS.track('https://veshk.ru/','pdf',createdDate)});
     doc.text(`${page} / ${total}`,right,288,{align:'right'});
   }
   return doc;
