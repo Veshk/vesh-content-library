@@ -62,15 +62,16 @@ function collectionHtml(createdDate=window.VESH_LINKS.creationDate()){
   const title=$('collection-title').value.trim()||'Подборка материалов ВЭШ';
   const note=$('collection-note').value.trim();
   // Email clients do not load this site's styles or fonts. Keep formatting inline.
-  const intro=note?`<p style="margin:0 0 18px;font:14px/1.6 Arial,Helvetica,sans-serif;color:#18252a;">${esc(note).replace(/\r?\n/g,'<br>')}</p>`:'';
+  const textStyle='font:normal 11pt/1.45 Verdana,Arial,sans-serif;color:#222222;text-align:left;';
+  const intro=note?`<p style="margin:0 0 12px;${textStyle}">${esc(note).replace(/\r?\n/g,'<br>')}</p>`:'';
   const groups=window.VESH_COLLECTION.groups(selectedItems()).map(group=>{
     const rows=group.items.map(x=>{
       const url=esc(window.VESH_LINKS.track(x.url,'email',createdDate));
-      return `<tr><td style="padding:12px 0 14px;border-top:1px solid #dce4e8;text-align:left;"><p style="margin:0 0 5px;font:bold 16px/1.4 Arial,Helvetica,sans-serif;"><a href="${url}" target="_blank" rel="noopener" style="color:#0e394b;text-decoration:none;font:bold 16px/1.4 Arial,Helvetica,sans-serif;">${esc(x.title)}</a></p><a href="${url}" target="_blank" rel="noopener" style="color:#226d8d;text-decoration:underline;font:bold 13px/1.5 Arial,Helvetica,sans-serif;">${esc(window.VESH_COLLECTION.action(x.type))}</a></td></tr>`;
+      return `<p style="margin:0 0 10px;${textStyle}">${esc(x.title)}<br><a href="${url}" target="_blank" rel="noopener" style="font:normal 11pt/1.45 Verdana,Arial,sans-serif;color:#1155cc;text-decoration:underline;">${esc(window.VESH_COLLECTION.action(x.type))}</a></p>`;
     }).join('');
-    return `<h3 style="margin:22px 0 8px;font:bold 14px/1.4 Arial,Helvetica,sans-serif;color:#8d1638;">${esc(group.label)}</h3><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;">${rows}</table>`;
+    return `<p style="margin:16px 0 8px;${textStyle}"><strong>${esc(group.label)}</strong></p>${rows}`;
   }).join('');
-  return `<div lang="ru" style="max-width:640px;font:14px/1.6 Arial,Helvetica,sans-serif;color:#18252a;text-align:left;"><h2 style="margin:0 0 16px;font:bold 22px/1.3 Arial,Helvetica,sans-serif;color:#0e394b;">${esc(title)}</h2>${intro}${groups}</div>`;
+  return `<div lang="ru" style="${textStyle}"><p style="margin:0 0 12px;${textStyle}">${esc(title)}</p>${intro}${groups}</div>`;
 }
 function renderEmailPreview(){
   $('email-preview').innerHTML=collectionHtml();
