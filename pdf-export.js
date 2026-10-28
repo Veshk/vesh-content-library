@@ -9,7 +9,7 @@ window.createVeshPDF = ({title,note,items}) => {
     ['Lato-Bold.ttf','Lato','bold','latoBold'],
     ['Qanelas-Bold.ttf','Qanelas','bold','qanelasBold']
   ]){doc.addFileToVFS(file,assets.fonts[key]);doc.addFont(file,family,style);}
-  const navy='#0E394B',ink='#18252A',muted='#5F7286';
+  const navy='#0E394B',ink='#18252A',muted='#5F7286',blue='#226D8D',wine='#8D1638';
   const left=18,right=192,bottom=273,width=174,perPage=8;
   let y=44,pageItems=0;
   const clean=value=>String(value).replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g,'').replace(/[\u2011\u2013\u2014]/g,'-');
@@ -35,19 +35,35 @@ window.createVeshPDF = ({title,note,items}) => {
   y+=3;
   if(note){paragraph(note,{size:10.5,color:muted,leading:4.8});y+=4;}
   y+=6;
-  items.forEach(item=>{
-    const x=54,w=right-x,leading=5.3;
-    font('Qanelas',13.5,'bold',navy);const titleLines=wrap(item.title,w);
-    const height=Math.max(22,titleLines.length*leading+8);
-    // Keep each material together and never place more than eight on a page.
-    if(pageItems===perPage||y+height>bottom)nextPage();
-    rule(y);
-    const baseline=y+8;
-    font('Lato',8.5,'normal',muted);doc.text(clean(item.type).toLocaleUpperCase('ru'),left,baseline);
-    font('Qanelas',13.5,'bold',navy);
-    titleLines.forEach((line,index)=>doc.textWithLink(line,x,baseline+index*leading,{url:item.url}));
-    y+=height;pageItems++;
-  });
+  const typeLabels={'Статья':'Статьи','Кейс':'Кейсы','Мастер-класс':'Мастер-классы','Демо-курс':'Демо-курсы'};
+  const types=[...new Set([...Object.keys(typeLabels),...items.map(item=>item.type)])];
+  for(const type of types){
+    const group=items.filter(item=>item.type===type);
+    let needsHeading=true;
+    for(const item of group){
+      const leading=5.2;
+      font('Qanelas',13.5,'bold',navy);const titleLines=wrap(item.title);
+      const height=Math.max(18,titleLines.length*leading+10);
+      const headingSpace=needsHeading?8+(pageItems?2:0):0;
+      // Keep headings with their first item and repeat them after a page break.
+      if(pageItems===perPage||y+headingSpace+height>bottom){nextPage();needsHeading=true;}
+      if(needsHeading){
+        if(pageItems)y+=2;
+        font('Lato',11,'bold',wine);doc.text(clean(typeLabels[type]||type),left,y+4);
+        y+=8;needsHeading=false;
+      }
+      rule(y);
+      const baseline=y+6;
+      font('Qanelas',13.5,'bold',navy);
+      titleLines.forEach((line,index)=>doc.textWithLink(line,left,baseline+index*leading,{url:item.url}));
+      const action=type==='Мастер-класс'?'Смотреть запись':type==='Демо-курс'?'Открыть демо-курс':'Читать';
+      const actionY=baseline+(titleLines.length-1)*leading+5;
+      font('Lato',9.5,'bold',blue);
+      const actionWidth=doc.textWithLink(action,left,actionY,{url:item.url});
+      doc.setDrawColor(blue);doc.setLineWidth(.15);doc.line(left,actionY+.8,left+actionWidth,actionY+.8);
+      y+=height;pageItems++;
+    }
+  }
   const total=doc.getNumberOfPages();
   for(let page=1;page<=total;page++){
     doc.setPage(page);
