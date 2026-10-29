@@ -8,3 +8,12 @@
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.toast{transition:none}}
 
 @media(min-width:681px){.header-inner{height:90px}.hero-inner{padding:25px 0 28px}.hero-aside{min-height:180px}.motif{width:135px;height:135px;top:-5px}.hero-count b{font-size:72px}.hero h1{font-size:46px}.hero .intro{font-size:16px;margin-top:15px}}
+
+.saved-selection{width:min(580px,calc(100% - 32px))}.saved-selection-body{padding:32px}.saved-selection h2{font-size:30px;line-height:1.15;color:var(--navy)}.saved-selection-body>p:not(.eyebrow){margin-top:18px;color:#49616d;line-height:1.6}.saved-selection-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}.saved-selection-actions button{white-space:normal;text-align:center;flex:1 1 210px}
+@media(max-width:680px){.saved-selection-body{padding:24px}.saved-selection h2{font-size:27px}.saved-selection-actions{margin-top:24px}.saved-selection-actions button{font-size:14px;padding:12px 16px}}
+
+/* Compact catalogue rows keep full titles readable while showing more materials. */
+.material{grid-template-columns:minmax(0,1fr) 36px;gap:16px;padding:11px 0 12px}.material-labels{gap:10px;margin-bottom:5px;align-items:center;flex-wrap:wrap}.material .badge{font-size:9px;line-height:1.4;padding:2px 5px;flex-shrink:0}.material .teacher-names{font-size:12px;line-height:1.4;margin-top:0}.material h3{font-size:17px;line-height:1.3;letter-spacing:0;max-width:none}.material h3 .arrow{font-size:14px;margin-left:2px}.material .tags{margin-top:6px;gap:4px 6px}.material .tag{font-size:10px;line-height:1.4;padding:1px 6px}.material .add-button{margin-top:0;align-self:center}.result-toolbar{padding:16px 0 9px}.search-box{padding:10px 13px}.selection-inner{min-height:70px}
+@media(max-width:680px){.material{gap:12px;padding:14px 0}.material h3{font-size:17px}.material-labels{gap:5px 8px}.material .teacher-names{font-size:11px}.material .tags{margin-top:7px}.selection-inner{min-height:80px}}
+
+.portal-home{font-size:13px;color:var(--blue);white-space:nowrap}@media(max-width:680px){.portal-home{display:none}.header-title{min-width:0}}

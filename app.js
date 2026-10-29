@@ -14,7 +14,13 @@ const badgeClass={'Кейс':' case','Мастер-класс':' masterclass','�
 $('library-count').textContent=data.length;
 $('library-updated').textContent='Версия базы от '+window.VESH_LIBRARY.updated.split('-').reverse().join('.');
 const state={types:new Set(),topics:new Set(),teachers:new Set(),query:'',selected:new Set()};
-try {const stored=JSON.parse(localStorage.getItem('vesh-content-selection')||'[]');if(Array.isArray(stored))state.selected=new Set(stored.filter(id=>byId.has(id)));}catch{}
+function restoreSelection(){
+  try{
+    const stored=JSON.parse(localStorage.getItem('vesh-content-selection')||'[]');
+    state.selected=new Set(Array.isArray(stored)?stored.filter(id=>byId.has(id)):[]);
+  }catch{state.selected.clear();}
+}
+restoreSelection();
 let matched=data;
 let toastTimer;
 function toast(message){$('toast').textContent=message;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),2800);}
@@ -30,7 +36,7 @@ matched=data.filter(matches);
 $('result-count').textContent=words(matched.length);
 $('empty').hidden=!!matched.length;
 $('add-all').disabled=!matched.some(x=>!state.selected.has(x.id));
-$('materials').innerHTML=matched.map(x=>{const chosen=state.selected.has(x.id);return `<article class="material${chosen?' chosen':''}"><div><div class="material-labels"><span class="badge${badgeClass[x.type]||''}">${esc(x.type)}</span></div><h3><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.title)} <span class="arrow" aria-hidden="true">↗</span></a></h3><p class="teacher-names${x.teachers.length?'':' missing'}">${esc(x.teachers.length?x.teachers.join(', '):'Преподаватель не указан')}</p><div class="tags">${x.topics.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div></div><button class="add-button" data-id="${x.id}" aria-pressed="${chosen}" aria-label="${chosen?'Убрать из подборки':'Добавить в подборку'}: ${esc(x.title)}" title="${chosen?'Убрать из подборки':'Добавить в подборку'}">${chosen?'✓':'+'}</button></article>`;}).join('');
+$('materials').innerHTML=matched.map(x=>{const chosen=state.selected.has(x.id);return `<article class="material${chosen?' chosen':''}"><div><div class="material-labels"><span class="badge${badgeClass[x.type]||''}">${esc(x.type)}</span><p class="teacher-names${x.teachers.length?'':' missing'}">${esc(x.teachers.length?x.teachers.join(', '):'Преподаватель не указан')}</p></div><h3><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.title)} <span class="arrow" aria-hidden="true">↗</span></a></h3><div class="tags">${x.topics.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div></div><button class="add-button" data-id="${x.id}" aria-pressed="${chosen}" aria-label="${chosen?'Убрать из подборки':'Добавить в подборку'}: ${esc(x.title)}" title="${chosen?'Убрать из подборки':'Добавить в подборку'}">${chosen?'✓':'+'}</button></article>`;}).join('');
 renderChips();renderSelection();
 }
 function renderChips(){const chips=[];for(const value of state.types)chips.push({kind:'type',value});for(const value of state.topics)chips.push({kind:'topic',value});for(const value of state.teachers)chips.push({kind:'teacher',value});$('active-filters').innerHTML=chips.map(c=>`<button class="filter-chip" data-kind="${c.kind}" data-value="${esc(c.value)}" aria-label="Убрать фильтр ${esc(c.value)}">${esc(c.value)}<span aria-hidden="true">×</span></button>`).join('');$('teacher-label').textContent=state.teachers.size?`Выбрано: ${state.teachers.size}`:'Все преподаватели';}
@@ -48,7 +54,37 @@ $('active-filters').addEventListener('click',e=>{const b=e.target.closest('butto
 $('reset').addEventListener('click',reset);$('empty-reset').addEventListener('click',reset);
 $('materials').addEventListener('click',e=>{const b=e.target.closest('[data-id]');if(!b)return;state.selected.has(b.dataset.id)?state.selected.delete(b.dataset.id):state.selected.add(b.dataset.id);save();render();});
 $('add-all').addEventListener('click',()=>{const before=state.selected.size;matched.forEach(x=>state.selected.add(x.id));save();render();toast(`Добавлено: ${words(state.selected.size-before)}`);});
-$('clear-selection').addEventListener('click',()=>{state.selected.clear();save();render();});
+function clearSelection(){
+  state.selected.clear();save();
+  $('collection-title').value='Подборка материалов ВЭШ';
+  $('collection-note').value='';
+  render();renderCollection();
+}
+$('clear-selection').addEventListener('click',clearSelection);
+const savedSelectionDialog=$('saved-selection');
+function askAboutSavedSelection(){
+  if(!state.selected.size||savedSelectionDialog.open)return;
+  $('saved-selection-count').textContent=words(state.selected.size);
+  savedSelectionDialog.showModal();
+}
+function continueSavedSelection(){
+  save();savedSelectionDialog.close();
+  $('open-collection').focus({preventScroll:true});
+}
+$('continue-selection').addEventListener('click',continueSavedSelection);
+$('start-new-selection').addEventListener('click',()=>{
+  clearSelection();savedSelectionDialog.close();
+  $('search').focus({preventScroll:true});
+  toast('Предыдущая подборка очищена. Можно собирать новую.');
+});
+// Escape preserves the saved work, just like the explicit Continue action.
+savedSelectionDialog.addEventListener('cancel',event=>{event.preventDefault();continueSavedSelection();});
+// A Back navigation may restore the page without re-running its scripts.
+window.addEventListener('pageshow',event=>{
+  if(!event.persisted)return;
+  $('collection').close();
+  restoreSelection();render();askAboutSavedSelection();
+});
 $('open-collection').addEventListener('click',()=>{renderCollection();$('collection').append($('toast'));$('collection').showModal();});
 $('close-collection').addEventListener('click',()=>$('collection').close());
 $('collection').addEventListener('close',()=>document.body.append($('toast')));
@@ -127,4 +163,5 @@ toast('PDF-подборка сохранена');
 finally{button.innerHTML=label;button.disabled=!state.selected.size;}
 });
 render();
+askAboutSavedSelection();
 })();
